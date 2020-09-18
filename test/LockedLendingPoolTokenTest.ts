@@ -62,6 +62,14 @@ describe("Locked Lending Pool Token", () => {
         await wait(oneHour);
 
         await lockedLendingPoolToken.withdraw(1);
+
+        await token.balanceOf(lockedLendingPoolToken.address).then(balance => {
+            expect(balance).to.eq(0)
+        });
+
+        await token.balanceOf(alice.address).then(balance => {
+            expect(balance).to.eq(oneEther.mul(500))
+        });
     });
 
     async function setupLendingPoolLock() {

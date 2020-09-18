@@ -2,15 +2,8 @@ import MockERC20Artifact from "../../artifacts/MockERC20.json";
 import {Signer} from "ethers";
 import {deployContract, MockProvider} from "ethereum-waffle";
 import {MockErc20} from "../../typechain/MockErc20";
-import StreamArtifact from "../../artifacts/Stream.json";
-import {Stream} from "../../typechain/Stream";
-import PausableStreamArtifact from "../../artifacts/PausableStream.json";
-import {PausableStream} from "../../typechain/PausableStream";
-import StreamManagerArtifact from "../../artifacts/StreamManager.json";
-import {StreamManager} from "../../typechain/StreamManager";
-import MultipleRecipientStreamArtifact from "../../artifacts/MultipleRecipientStream.json";
-import {MultipleRecipientStream} from "../../typechain/MultipleRecipientStream";
-
+import LockedLendingPoolTokenArtifact from "../../artifacts/LockedLendingPoolToken.json";
+import {LockedLendingPoolToken} from "../../typechain/LockedLendingPoolToken";
 let provider: MockProvider;
 
 export function getProvider() {
@@ -22,31 +15,13 @@ export function getProvider() {
 
 export async function deployErc20(signer: Signer) {
   return (await deployContract(signer, MockERC20Artifact, [
-    "MOCK",
-    "MOCK",
+    "LENDING POOL",
+    "LEND",
   ])) as MockErc20;
 }
 
-export async function deployStream(signer: Signer) {
-  return (await deployContract(signer, StreamArtifact)) as Stream;
-}
-
-export async function deployPausableStream(signer: Signer) {
-  return (await deployContract(
-      signer,
-      PausableStreamArtifact
-  )) as PausableStream;
-}
-
-export async function deployMultipleRecipientStream(signer: Signer) {
-  return await deployContract(signer, MultipleRecipientStreamArtifact) as MultipleRecipientStream;
-}
-
-export async function deployStreamManager(signer: Signer) {
-    return (await deployContract(
-        signer,
-        StreamManagerArtifact
-    )) as StreamManager;
+export async function deployLockedLendingPoolToken(signer: Signer) {
+  return (await deployContract(signer, LockedLendingPoolTokenArtifact)) as LockedLendingPoolToken;
 }
 
 export async function wait(amountOfTimeToWait: number) {

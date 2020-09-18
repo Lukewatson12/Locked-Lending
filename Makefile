@@ -5,7 +5,7 @@ typechain:
 
 compile:
 	npx buidler compile
-	cp -R artifacts/** app/src/build
+	make typechain
 
 compile-clean:
 	npx buidler clean

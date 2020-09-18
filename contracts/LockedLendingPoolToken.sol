@@ -23,17 +23,19 @@ contract LockedLendingPoolToken is ERC721 {
     address lendingPoolTokenAddress;
     IERC20 lendingPoolToken;
 
-    constructor(address _lendingPoolTokenAddress) public ERC721("Locked Lending", "LLPT") {
+    constructor(address _lendingPoolTokenAddress)
+        public
+        ERC721("Locked Lending", "LLPT")
+    {
         lendingPoolToken = IERC20(_lendingPoolTokenAddress);
     }
 
-    function lockLendingPoolToken(
-        uint256 _amount,
-        uint256 _duration
-    ) public returns (uint256) {
+    function lockLendingPoolToken(uint256 _amount, uint256 _duration)
+        public
+        returns (uint256)
+    {
         require(
-            lendingPoolToken.allowance(msg.sender, address(this)) >=
-            _amount,
+            lendingPoolToken.allowance(msg.sender, address(this)) >= _amount,
             "Not enough allowance"
         );
         require(
@@ -48,17 +50,13 @@ contract LockedLendingPoolToken is ERC721 {
         _safeMint(msg.sender, lockedLendingPoolTokenId);
 
         LLPNFTMapping[lockedLendingPoolTokenId] = LLPNFT({
-            lockStart : block.timestamp,
-            lockEnd : block.timestamp.add(_duration),
-            amount : _amount,
-            isEntity : true
-            });
+            lockStart: block.timestamp,
+            lockEnd: block.timestamp.add(_duration),
+            amount: _amount,
+            isEntity: true
+        });
 
-        lendingPoolToken.transferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
+        lendingPoolToken.transferFrom(msg.sender, address(this), _amount);
 
         return lockedLendingPoolTokenId;
     }
@@ -66,27 +64,30 @@ contract LockedLendingPoolToken is ERC721 {
     function withdraw(uint256 _id) public {
         require(_isApprovedOrOwner(msg.sender, _id), "Not the owner");
         require(LLPNFTMapping[_id].isEntity, "Token does not exist");
-        require(block.timestamp >= LLPNFTMapping[_id].lockEnd, "Tokens are still locked");
+        require(
+            block.timestamp >= LLPNFTMapping[_id].lockEnd,
+            "Tokens are still locked"
+        );
 
         lendingPoolToken.transfer(ownerOf(_id), LLPNFTMapping[_id].amount);
     }
 
     // todo allow transfer and post owner address
     function getTokenById(uint256 _id)
-    public
-    view
-    returns (
-        uint256 lockStart,
-        uint256 lockEnd,
-        uint256 amount,
-        bool isEntity
-    )
+        public
+        view
+        returns (
+            uint256 lockStart,
+            uint256 lockEnd,
+            uint256 amount,
+            bool isEntity
+        )
     {
         return (
-        LLPNFTMapping[_id].lockStart,
-        LLPNFTMapping[_id].lockEnd,
-        LLPNFTMapping[_id].amount,
-        LLPNFTMapping[_id].isEntity
+            LLPNFTMapping[_id].lockStart,
+            LLPNFTMapping[_id].lockEnd,
+            LLPNFTMapping[_id].amount,
+            LLPNFTMapping[_id].isEntity
         );
     }
 }

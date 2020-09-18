@@ -2,7 +2,7 @@ import chai from "chai";
 import {LockedLendingPoolToken} from "../typechain/LockedLendingPoolToken";
 import {MockErc20} from "../typechain/MockErc20";
 import {BigNumber} from "ethers";
-import {deployErc20, deployLockedLendingPoolToken, getBlockTime, getProvider} from "./helpers/contract";
+import {deployErc20, deployLockedLendingPoolToken, getBlockTime, getProvider, wait} from "./helpers/contract";
 import {oneHour} from "./helpers/numbers";
 
 const {expect} = chai;
@@ -54,6 +54,14 @@ describe("Locked Lending Pool Token", () => {
         await setupLendingPoolLock();
 
         await expect(lockedLendingPoolToken.withdraw(1)).to.be.revertedWith("Tokens are still locked");
+    });
+
+    it("Should allow withdrawal if the lock period has been elapsed", async () => {
+        await setupLendingPoolLock();
+
+        await wait(oneHour);
+
+        await lockedLendingPoolToken.withdraw(1);
     });
 
     async function setupLendingPoolLock() {

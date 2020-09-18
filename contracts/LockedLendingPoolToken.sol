@@ -22,7 +22,11 @@ contract LockedLendingPoolToken is ERC721 {
 
     constructor() public ERC721("Locked Lending", "LLPT") {}
 
-    function lockLendingPoolToken(address _lendingPoolToken, uint256 _amount, uint256 _duration) public returns (uint256){
+    function lockLendingPoolToken(
+        address _lendingPoolToken,
+        uint256 _amount,
+        uint256 _duration
+    ) public returns (uint256) {
         require(_amount > 0, "Amount must be above 0");
         require(_duration > 0, "Duration must be more than 0 seconds");
 
@@ -31,26 +35,30 @@ contract LockedLendingPoolToken is ERC721 {
         _safeMint(msg.sender, newItemId);
 
         LLPNFTMapping[newItemId] = LLPNFT({
-            lockStart : block.timestamp,
-            lockEnd : block.timestamp.add(_duration),
-            amount : _amount,
-            isEntity : true
-            });
+            lockStart: block.timestamp,
+            lockEnd: block.timestamp.add(_duration),
+            amount: _amount,
+            isEntity: true
+        });
 
         return newItemId;
     }
 
-    function getTokenById(uint256 _id) public view returns (
-        uint256 lockStart,
-        uint256 lockEnd,
-        uint256 amount,
-        bool isEntity
-    ) {
+    function getTokenById(uint256 _id)
+        public
+        view
+        returns (
+            uint256 lockStart,
+            uint256 lockEnd,
+            uint256 amount,
+            bool isEntity
+        )
+    {
         return (
-        LLPNFTMapping[_id].lockStart,
-        LLPNFTMapping[_id].lockEnd,
-        LLPNFTMapping[_id].amount,
-        LLPNFTMapping[_id].isEntity
+            LLPNFTMapping[_id].lockStart,
+            LLPNFTMapping[_id].lockEnd,
+            LLPNFTMapping[_id].amount,
+            LLPNFTMapping[_id].isEntity
         );
     }
 }

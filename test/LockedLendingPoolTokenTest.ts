@@ -15,25 +15,20 @@ describe("Locked Lending Pool Token", () => {
     let lockedLendingPoolToken: LockedLendingPoolToken;
     let token: MockErc20;
     let timestamp: number;
+    let amount = oneEther.mul(100);
 
     beforeEach(async () => {
         token = await deployErc20(alice);
         timestamp = await getBlockTime();
 
-        lockedLendingPoolToken = await deployLockedLendingPoolToken(alice);
+        lockedLendingPoolToken = await deployLockedLendingPoolToken(alice, token);
 
         await token.mint(alice.address, oneEther.mul(500));
         await token.approve(lockedLendingPoolToken.address, oneEther.mul(500));
     });
 
     it("Should mint a Locked Lending Pool Token", async () => {
-        let amount = oneEther.mul(100);
-
-        await lockedLendingPoolToken.lockLendingPoolToken(
-            token.address,
-            amount,
-            oneHour
-        );
+        await setupLendingPoolLock();
 
         await lockedLendingPoolToken.getTokenById(1).then((llpToken: any) => {
             expect(llpToken.amount).to.eq(amount);
@@ -44,13 +39,7 @@ describe("Locked Lending Pool Token", () => {
     });
 
     it("Should transfer the LP tokens into the Lock contract", async () => {
-        let amount = oneEther.mul(100);
-
-        await lockedLendingPoolToken.lockLendingPoolToken(
-            token.address,
-            amount,
-            oneHour
-        );
+        await setupLendingPoolLock();
 
         await token.balanceOf(lockedLendingPoolToken.address).then(balance => {
             expect(balance).to.eq(amount)
@@ -60,4 +49,17 @@ describe("Locked Lending Pool Token", () => {
             expect(balance).to.eq(oneEther.mul(400))
         });
     });
+
+    it("Should prevent withdrawal if the lock period has not been elapsed", async () => {
+        await setupLendingPoolLock();
+
+        await expect(lockedLendingPoolToken.withdraw(1)).to.be.revertedWith("Tokens are still locked");
+    });
+
+    async function setupLendingPoolLock() {
+        await lockedLendingPoolToken.lockLendingPoolToken(
+            amount,
+            oneHour
+        );
+    }
 });

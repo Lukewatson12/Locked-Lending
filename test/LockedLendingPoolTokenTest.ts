@@ -41,6 +41,23 @@ describe("Locked Lending Pool Token", () => {
             expect(llpToken.lockEnd.toNumber()).to.be.approximately(timestamp + oneHour, 10);
             expect(llpToken.isEntity).to.be.true;
         });
+    });
 
+    it("Should transfer the LP tokens into the Lock contract", async () => {
+        let amount = oneEther.mul(100);
+
+        await lockedLendingPoolToken.lockLendingPoolToken(
+            token.address,
+            amount,
+            oneHour
+        );
+
+        await token.balanceOf(lockedLendingPoolToken.address).then(balance => {
+            expect(balance).to.eq(amount)
+        });
+
+        await token.balanceOf(alice.address).then(balance => {
+            expect(balance).to.eq(oneEther.mul(400))
+        });
     });
 });

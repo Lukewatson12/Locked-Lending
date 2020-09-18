@@ -72,6 +72,23 @@ describe("Locked Lending Pool Token", () => {
         });
     });
 
+    it("Should burn the token after withdrawal", async () => {
+        await setupLendingPoolLock();
+
+        await wait(oneHour);
+
+        await lockedLendingPoolToken.withdraw(1);
+
+        await lockedLendingPoolToken.getTokenById(1).then((llpToken: any) => {
+            expect(llpToken.amount).to.eq(0);
+            expect(llpToken.lockStart.toNumber()).to.be.eq(0);
+            expect(llpToken.lockEnd.toNumber()).to.be.eq(0);
+            expect(llpToken.isEntity).to.be.false;
+        });
+
+        await expect(lockedLendingPoolToken.ownerOf(1)).to.be.revertedWith("ERC721: owner query for nonexistent token");
+    });
+
     async function setupLendingPoolLock() {
         await lockedLendingPoolToken.lockLendingPoolToken(
             amount,

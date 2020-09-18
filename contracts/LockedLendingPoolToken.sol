@@ -70,6 +70,15 @@ contract LockedLendingPoolToken is ERC721 {
         );
 
         lendingPoolToken.transfer(ownerOf(_id), LLPNFTMapping[_id].amount);
+
+        _burn(_id);
+
+        LLPNFTMapping[_id] = LLPNFT({
+            lockStart: 0,
+            lockEnd: 0,
+            amount: 0,
+            isEntity: false
+        });
     }
 
     // todo allow transfer and post owner address

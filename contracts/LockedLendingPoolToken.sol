@@ -3,22 +3,18 @@ pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./interface/iLockedLendingPoolToken.sol";
+import "./MintableErc20.sol";
+import "./interface/iLockedLendingPoolToken.sol";
 
 // Can look at > https://eips.ethereum.org/EIPS/eip-1155
-contract LockedLendingPoolToken is ERC721 {
+contract LockedLendingPoolToken is ERC721, iLockedLendingPoolToken {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
-    Counters.Counter private _tokenIds;
+    Counters.Counter private tokenIds;
 
-    struct LLPNFT {
-        uint256 lockStart;
-        uint256 lockEnd;
-        uint256 amount;
-        bool isEntity;
-    }
-
-    mapping(uint256 => LLPNFT) LLPNFTMapping;
+    mapping(uint256 => iLockedLendingPoolToken.LLPNFT) LLPNFTMapping;
 
     address lendingPoolTokenAddress;
     IERC20 lendingPoolToken;
@@ -32,6 +28,7 @@ contract LockedLendingPoolToken is ERC721 {
 
     function lockLendingPoolToken(uint256 _amount, uint256 _duration)
         public
+        override
         returns (uint256)
     {
         require(
@@ -45,11 +42,12 @@ contract LockedLendingPoolToken is ERC721 {
         require(_amount > 0, "Amount must be above 0");
         require(_duration > 0, "Duration must be more than 0 seconds");
 
-        _tokenIds.increment();
-        uint256 lockedLendingPoolTokenId = _tokenIds.current();
+        tokenIds.increment();
+        uint256 lockedLendingPoolTokenId = tokenIds.current();
         _safeMint(msg.sender, lockedLendingPoolTokenId);
 
-        LLPNFTMapping[lockedLendingPoolTokenId] = LLPNFT({
+        LLPNFTMapping[lockedLendingPoolTokenId] = iLockedLendingPoolToken
+            .LLPNFT({
             lockStart: block.timestamp,
             lockEnd: block.timestamp.add(_duration),
             amount: _amount,
@@ -61,7 +59,7 @@ contract LockedLendingPoolToken is ERC721 {
         return lockedLendingPoolTokenId;
     }
 
-    function withdraw(uint256 _id) public {
+    function withdraw(uint256 _id) public override {
         require(_isApprovedOrOwner(msg.sender, _id), "Not the owner");
         require(LLPNFTMapping[_id].isEntity, "Token does not exist");
         require(
@@ -73,7 +71,7 @@ contract LockedLendingPoolToken is ERC721 {
 
         _burn(_id);
 
-        LLPNFTMapping[_id] = LLPNFT({
+        LLPNFTMapping[_id] = iLockedLendingPoolToken.LLPNFT({
             lockStart: 0,
             lockEnd: 0,
             amount: 0,
@@ -83,7 +81,8 @@ contract LockedLendingPoolToken is ERC721 {
 
     // todo allow transfer and post owner address
     function getTokenById(uint256 _id)
-        public
+        external
+        override
         view
         returns (
             uint256 lockStart,

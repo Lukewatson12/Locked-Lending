@@ -1,7 +1,7 @@
 pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./LockedLendingPoolToken.sol";
+import "./LockedLendingPoolNft.sol";
 
 contract LPTokenWrapper {
     using SafeMath for uint256;
@@ -9,7 +9,8 @@ contract LPTokenWrapper {
     address public constant erc20LendingPool = address(
         0x181Aea6936B407514ebFC0754A37704eB8d98F91
     );
-    LockedLendingPoolToken private lendingPoolNft;
+
+    LockedLendingPoolNft private lendingPoolNft;
 
     uint256 private countNftStaked;
     uint256 private countLpTokensStaked;
@@ -19,7 +20,7 @@ contract LPTokenWrapper {
     mapping(address => LLPNFT[]) private owned;
 
     constructor() public {
-        lendingPoolNft = LockedLendingPoolToken(erc20LendingPool);
+        lendingPoolNft = LockedLendingPoolNft(erc20LendingPool);
     }
 
     function totalStaked() public view returns (uint256) {

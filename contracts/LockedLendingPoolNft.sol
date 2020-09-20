@@ -8,7 +8,7 @@ import "./MintableErc20.sol";
 import "./interface/iLockedLendingPoolToken.sol";
 
 // Can look at > https://eips.ethereum.org/EIPS/eip-1155
-contract LockedLendingPoolToken is ERC721, iLockedLendingPoolToken {
+contract LockedLendingPoolNft is ERC721, iLockedLendingPoolToken {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 

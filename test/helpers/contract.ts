@@ -5,6 +5,7 @@ import MintableErc20Artifact from "../../artifacts/MintableErc20.json";
 import LockedLendingPoolNftArtifact from "../../artifacts/LockedLendingPoolNft.json";
 import {LockedLendingPoolToken} from "../../typechain/LockedLendingPoolToken";
 import {MintableErc20} from "../../typechain/MintableErc20";
+import {oneEther} from "./numbers";
 
 let provider: MockProvider;
 
@@ -26,9 +27,17 @@ export async function deployLockedLendingPoolToken(
   signer: Signer,
   token: MockErc20
 ) {
-  return (await deployContract(signer, LockedLendingPoolNftArtifact, [
+  const nft = (await deployContract(signer, LockedLendingPoolNftArtifact, [
     token.address,
   ])) as LockedLendingPoolToken;
+
+  await signer
+    .getAddress()
+    .then((address) => token.mint(address, oneEther.mul(500)));
+
+  await token.approve(nft.address, oneEther.mul(500));
+
+  return nft;
 }
 
 export async function wait(amountOfTimeToWait: number) {

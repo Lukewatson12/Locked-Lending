@@ -28,9 +28,6 @@ describe("Locked Lending Pool Token", () => {
     timestamp = await getBlockTime();
 
     lockedLendingPoolNft = await deployLockedLendingPoolToken(alice, token);
-
-    await token.mint(alice.address, oneEther.mul(500));
-    await token.approve(lockedLendingPoolNft.address, oneEther.mul(500));
   });
 
   it("Should mint a Locked Lending Pool Token", async () => {

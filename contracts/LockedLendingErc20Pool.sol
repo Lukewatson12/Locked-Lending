@@ -1,7 +1,7 @@
 pragma solidity ^0.6.0;
 
 import "./LPTokenWrapper.sol";
-import "./MintableErc20.sol";
+import "./FairToken.sol";
 import "./interface/IRewardDistributionRecipient.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/Math.sol";
@@ -12,9 +12,7 @@ contract LockedLendingErc20Pool is
 {
     using SafeERC20 for IERC20;
 
-    MintableErc20 public erc20Token = MintableErc20(
-        0x1Aa61c196E76805fcBe394eA00e4fFCEd24FC469
-    );
+    FairToken public fairToken = FairToken(0xA193E42526F1FEA8C99AF609dcEabf30C1c29fAA);
 
     uint256 public constant DURATION = 30 days;
 
@@ -40,6 +38,22 @@ contract LockedLendingErc20Pool is
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
+        _;
+    }
+
+    modifier checkHalve() {
+        if (block.timestamp >= periodFinish) {
+            initReward = initReward.mul(50).div(100);
+            fairToken.mint(address(this), initReward);
+
+            rewardRate = initReward.div(DURATION);
+            periodFinish = block.timestamp.add(DURATION);
+            emit RewardAdded(initReward);
+        }
+        _;
+    }
+    modifier checkStart() {
+        require(block.timestamp > startTime, "Pool is not open yet");
         _;
     }
 
@@ -75,11 +89,11 @@ contract LockedLendingErc20Pool is
         override
         updateReward(msg.sender)
         checkHalve
-        checkStart
+    //        checkStart
     {
-        require(tokenId >= 0, "token id must be >= 0");
-        super.stake(tokenId);
-        emit Staked(msg.sender, tokenId);
+        //        require(tokenId >= 0, "token id must be >= 0");
+        //        super.stake(tokenId);
+        //        emit Staked(msg.sender, tokenId);
     }
 
     function stakeMultiple(uint256[] memory tokenIds)
@@ -142,25 +156,9 @@ contract LockedLendingErc20Pool is
         uint256 reward = earned(msg.sender);
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            erc20Token.transfer(msg.sender, reward);
+            fairToken.transfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
-    }
-
-    modifier checkHalve() {
-        if (block.timestamp >= periodFinish) {
-            initReward = initReward.mul(50).div(100);
-            erc20Token.mint(address(this), initReward);
-
-            rewardRate = initReward.div(DURATION);
-            periodFinish = block.timestamp.add(DURATION);
-            emit RewardAdded(initReward);
-        }
-        _;
-    }
-    modifier checkStart() {
-        require(block.timestamp > startTime, "Pool is not open yet");
-        _;
     }
 
     function notifyRewardAmount(uint256 reward)
@@ -176,7 +174,7 @@ contract LockedLendingErc20Pool is
             uint256 leftover = remaining.mul(rewardRate);
             rewardRate = reward.add(leftover).div(DURATION);
         }
-        erc20Token.mint(address(this), reward);
+        fairToken.mint(address(this), reward);
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp.add(DURATION);
         emit RewardAdded(reward);

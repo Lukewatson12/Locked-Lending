@@ -9,7 +9,7 @@ interface iLockedLendingPoolToken {
     }
 
     function lockLendingPoolToken(uint256 _amount, uint256 _duration)
-    external
+        external
         virtual
         returns (uint256);
 

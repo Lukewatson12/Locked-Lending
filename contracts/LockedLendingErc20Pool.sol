@@ -97,7 +97,7 @@ contract LockedLendingErc20Pool is
 
     function withdraw(uint256 tokenId)
         public
-    override
+        override
         updateReward(msg.sender)
         checkHalve
         checkStart
@@ -123,7 +123,7 @@ contract LockedLendingErc20Pool is
 
     function withdrawAll()
         public
-    override
+        override
         updateReward(msg.sender)
         checkHalve
         checkStart

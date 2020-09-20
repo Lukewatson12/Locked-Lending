@@ -6,7 +6,9 @@ import "./LockedLendingPoolToken.sol";
 contract LPTokenWrapper {
     using SafeMath for uint256;
 
-    address constant public erc20LendingPool = address(0x181Aea6936B407514ebFC0754A37704eB8d98F91);
+    address public constant erc20LendingPool = address(
+        0x181Aea6936B407514ebFC0754A37704eB8d98F91
+    );
     LockedLendingPoolToken private lendingPoolNft;
 
     uint256 private countNftStaked;
@@ -86,11 +88,8 @@ contract LPTokenWrapper {
             uint256 amount
         )
     {
-        (
-            uint256 lockStart,
-            uint256 lockEnd,
-            uint256 amount,
-        ) = lendingPoolNft.getTokenById(_id);
+        (uint256 lockStart, uint256 lockEnd, uint256 amount, ) = lendingPoolNft
+            .getTokenById(_id);
 
         return (lockStart, lockEnd, amount);
     }
@@ -115,11 +114,7 @@ contract LPTokenWrapper {
         countLpTokensStaked = countLpTokensStaked.add(amount);
         myStake[msg.sender] = myStake[msg.sender].add(amount);
 
-        lendingPoolNft.transferFrom(
-            msg.sender,
-            address(this),
-            _tokenId
-        );
+        lendingPoolNft.transferFrom(msg.sender, address(this), _tokenId);
     }
 
     function withdraw(uint256 _tokenId) public virtual {

@@ -31,6 +31,7 @@ interface iLockedLendingPoolToken {
             uint256 lockStart,
             uint256 lockEnd,
             uint256 amount,
-            bool isEntity
+            bool isEntity,
+            LockPeriod lockPeriod
         );
 }

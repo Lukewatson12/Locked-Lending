@@ -44,6 +44,7 @@ describe("Locked Lending Pool Token", () => {
         10
       );
       expect(llpToken.isEntity).to.be.true;
+      expect(llpToken.lockPeriod).to.be.eq(1);
     });
   });
 

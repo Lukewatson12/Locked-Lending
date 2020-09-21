@@ -3,6 +3,7 @@ pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./WrappedLendingPoolToken.sol";
+import "./interface/iLockedLendingPoolToken.sol";
 
 contract LPTokenWrapper is IERC721Receiver {
     using SafeMath for uint256;
@@ -46,18 +47,31 @@ contract LPTokenWrapper is IERC721Receiver {
     }
 
     function calculateLendingValue(
-        uint256 lockStart,
-        uint256 lockEnd,
-        uint256 numberOfLendingPoolTokens
+        iLockedLendingPoolToken.LockPeriod _lockPeriod,
+        uint256 _numberOfLendingPoolTokens
     ) public view returns (uint256) {
-        return 10;
-        //        uint256 timeSinceLock = block.timestamp.sub(lockStart);
-        //        uint256 totalLockTime = lockEnd.sub(generationTime);
-        //
-        //        uint256 multiplier = 100000;
-        //        uint256 per = timeSinceLock.mul(multiplier).div(totalLockTime);
-        //
-        //        return multiplier.sub(per).mul(coverAmount).div(multiplier);
+        return
+            _numberOfLendingPoolTokens.mul(
+                determineLockPeriodMultiplier(_lockPeriod)
+            );
+    }
+
+    function determineLockPeriodMultiplier(
+        iLockedLendingPoolToken.LockPeriod _lockPeriod
+    ) public view returns (uint256) {
+        if (_lockPeriod == iLockedLendingPoolToken.LockPeriod.THREE_MONTHS) {
+            return 10;
+        } else if (
+            _lockPeriod == iLockedLendingPoolToken.LockPeriod.SIX_MONTHS
+        ) {
+            return 25;
+        } else if (
+            _lockPeriod == iLockedLendingPoolToken.LockPeriod.TWELVE_MONTHS
+        ) {
+            return 75;
+        }
+
+        return 0;
     }
 
     function idsStaked(address account) public view returns (uint256[] memory) {
@@ -72,22 +86,13 @@ contract LPTokenWrapper is IERC721Receiver {
         return staked;
     }
 
-    function getToken(uint256 _id)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        return wrappedLendingPoolToken.getToken(_id);
-    }
-
     function stake(uint256 _tokenId) public virtual {
-        (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
-            _tokenId
-        );
+        (
+            uint256 lockStart,
+            uint256 lockEnd,
+            uint256 amount,
+            iLockedLendingPoolToken.LockPeriod lockPeriod
+        ) = getToken(_tokenId);
 
         require(
             lockEnd - 24 hours > block.timestamp,
@@ -96,11 +101,7 @@ contract LPTokenWrapper is IERC721Receiver {
 
         require(amount > 0, "Staked amount must be more than 0");
 
-        uint256 lendingValue = calculateLendingValue(
-            lockStart,
-            lockEnd,
-            amount
-        );
+        uint256 lendingValue = calculateLendingValue(lockPeriod, amount);
 
         owned[msg.sender].push(
             LLPNFT(_tokenId, lockStart, lockEnd, amount, lendingValue, false)
@@ -147,6 +148,19 @@ contract LPTokenWrapper is IERC721Receiver {
                 withdraw(i);
             }
         }
+    }
+
+    function getToken(uint256 _id)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            iLockedLendingPoolToken.LockPeriod
+        )
+    {
+        return wrappedLendingPoolToken.getToken(_id);
     }
 
     struct LLPNFT {

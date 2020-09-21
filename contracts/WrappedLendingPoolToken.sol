@@ -42,7 +42,10 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
         );
 
         require(_amount > 0, "Amount must be above 0");
-        require(_lockPeriod != LockPeriod.FINISHED, "Must set a valid lock period");
+        require(
+            _lockPeriod != LockPeriod.FINISHED,
+            "Must set a valid lock period"
+        );
 
         tokenIds.increment();
         uint256 lockedLendingPoolTokenId = tokenIds.current();
@@ -92,14 +95,16 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
             uint256 lockStart,
             uint256 lockEnd,
             uint256 amount,
-            bool isEntity
+            bool isEntity,
+            LockPeriod lockPeriod
         )
     {
         return (
             LLPNFTMapping[_id].lockStart,
             LLPNFTMapping[_id].lockEnd,
             LLPNFTMapping[_id].amount,
-            LLPNFTMapping[_id].isEntity
+            LLPNFTMapping[_id].isEntity,
+            LLPNFTMapping[_id].lockPeriod
         );
     }
 
@@ -109,13 +114,15 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
         returns (
             uint256,
             uint256,
-            uint256
+            uint256,
+            LockPeriod
         )
     {
         return (
             LLPNFTMapping[_id].lockStart,
             LLPNFTMapping[_id].lockEnd,
-            LLPNFTMapping[_id].amount
+            LLPNFTMapping[_id].amount,
+            LLPNFTMapping[_id].lockPeriod
         );
     }
 

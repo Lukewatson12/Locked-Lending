@@ -96,7 +96,6 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
                 .add(rewards[account]);
     }
 
-    // stake visibility is public as overriding LPTokenWrapper's stake() function
     function stake(uint256 tokenId)
         public
         override
@@ -127,7 +126,7 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
         checkHalve
     {
         require(tokenId >= 0, "token id must be >= 0");
-        require(numStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
+        require(totalStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
         super.withdraw(tokenId);
         emit Withdrawn(msg.sender, tokenId);
     }
@@ -145,7 +144,7 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     }
 
     function withdrawAll() public override updateReward(msg.sender) checkHalve {
-        require(numStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
+        require(totalStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
         super.withdrawAll();
         emit WithdrawnAll(msg.sender);
     }

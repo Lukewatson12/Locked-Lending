@@ -14,10 +14,10 @@ contract LPTokenWrapper is IERC721Receiver {
 
     uint256 private countNftStaked;
     uint256 private countLpTokensStaked;
-    uint256 private adjustedTotalStaked;
+    uint256 private totalLendingValue;
 
-    mapping(address => uint256) private myStake;
-    mapping(address => LLPNFT[]) private owned;
+    mapping(address => uint256) internal myLendingValue;
+    mapping(address => LLPNFT[]) internal owned;
 
     // todo this is terrible
     function setWrappedLendingPoolToken(address _address) public {
@@ -29,14 +29,14 @@ contract LPTokenWrapper is IERC721Receiver {
     }
 
     function totalSupply() public view returns (uint256) {
-        return adjustedTotalStaked;
+        return totalLendingValue;
     }
 
     function balanceOf(address _account) public view returns (uint256) {
-        return myStake[_account];
+        return myLendingValue[_account];
     }
 
-    function numStaked(address account) public view returns (uint256) {
+    function totalStaked(address account) public view returns (uint256) {
         uint256 staked = 0;
         for (uint256 i = 0; i < owned[account].length; i++) {
             if (!owned[account][i].isWithdrawn) {
@@ -75,7 +75,7 @@ contract LPTokenWrapper is IERC721Receiver {
     }
 
     function idsStaked(address account) public view returns (uint256[] memory) {
-        uint256[] memory staked = new uint256[](numStaked(account));
+        uint256[] memory staked = new uint256[](totalStaked(account));
         uint256 tempIdx = 0;
         for (uint256 i = 0; i < owned[account].length; i++) {
             if (!owned[account][i].isWithdrawn) {
@@ -108,8 +108,8 @@ contract LPTokenWrapper is IERC721Receiver {
         );
 
         countNftStaked = countNftStaked.add(1);
-        countLpTokensStaked = countLpTokensStaked.add(amount);
-        myStake[msg.sender] = myStake[msg.sender].add(amount);
+        countLpTokensStaked = countLpTokensStaked.add(lendingValue);
+        myLendingValue[msg.sender] = myLendingValue[msg.sender].add(lendingValue);
 
         wrappedLendingPoolToken.safeTransferFrom(
             msg.sender,
@@ -128,7 +128,8 @@ contract LPTokenWrapper is IERC721Receiver {
                 countLpTokensStaked = countLpTokensStaked.sub(
                     owned[msg.sender][i].lendingPoolTokens
                 );
-                myStake[msg.sender] = myStake[msg.sender].sub(
+
+                myLendingValue[msg.sender] = myLendingValue[msg.sender].sub(
                     owned[msg.sender][i].lendingPoolTokens
                 );
 

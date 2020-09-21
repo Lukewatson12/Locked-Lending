@@ -74,7 +74,7 @@ describe("Locked Lending Pool Token", () => {
     await setupLendingPoolLock();
 
     await alicePool.stake(1);
-    await pool.totalStaked().then((totalStaked) => {
+    await pool.totalStaked().then((totalStaked: BigNumber) => {
       expect(totalStaked).to.eq(amount);
     });
 

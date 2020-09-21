@@ -1,11 +1,14 @@
 import {Signer} from "ethers";
 import {deployContract, MockProvider} from "ethereum-waffle";
-import {MockErc20} from "../../typechain/MockErc20";
-import MintableErc20Artifact from "../../artifacts/MintableErc20.json";
-import LockedLendingPoolNftArtifact from "../../artifacts/LockedLendingPoolNft.json";
-import {LockedLendingPoolToken} from "../../typechain/LockedLendingPoolToken";
-import {MintableErc20} from "../../typechain/MintableErc20";
 import {oneEther} from "./numbers";
+
+import LendingPoolErc20Artifact from "../../artifacts/LendingPoolErc20.json";
+import WrappedLendingPoolTokenArtifact from "../../artifacts/WrappedLendingPoolToken.json";
+import FairTokenArtifact from "../../artifacts/FairToken.json";
+
+import {FairToken} from "../../typechain/FairToken";
+import {LendingPoolErc20} from "../../typechain/LendingPoolErc20";
+import {WrappedLendingPoolToken} from "../../typechain/WrappedLendingPoolToken";
 
 let provider: MockProvider;
 
@@ -16,28 +19,32 @@ export function getProvider() {
   return provider;
 }
 
-export async function deployErc20(signer: Signer) {
-  return (await deployContract(signer, MintableErc20Artifact, [
-    "LENDING POOL",
-    "LEND",
-  ])) as MintableErc20;
+export async function deployFairToken(signer: Signer) {
+  return (await deployContract(signer, FairTokenArtifact)) as FairToken;
 }
 
-export async function deployLockedLendingPoolToken(
+export async function deployLendingPoolErc20(signer: Signer) {
+  return (await deployContract(signer, LendingPoolErc20Artifact, [
+    "LENDING POOL",
+    "LEND",
+  ])) as LendingPoolErc20;
+}
+
+export async function deployWrappedLendingPoolToken(
   signer: Signer,
-  token: MockErc20
+  token: LendingPoolErc20
 ) {
-  const nft = (await deployContract(signer, LockedLendingPoolNftArtifact, [
+  const wrappedLendingPoolToken = (await deployContract(signer, WrappedLendingPoolTokenArtifact, [
     token.address,
-  ])) as LockedLendingPoolToken;
+  ])) as WrappedLendingPoolToken;
 
   await signer
     .getAddress()
     .then((address) => token.mint(address, oneEther.mul(500)));
 
-  await token.approve(nft.address, oneEther.mul(500));
+  await token.approve(wrappedLendingPoolToken.address, oneEther.mul(500));
 
-  return nft;
+  return wrappedLendingPoolToken;
 }
 
 export async function wait(amountOfTimeToWait: number) {

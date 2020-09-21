@@ -1,16 +1,16 @@
 pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "./LockedLendingPoolNft.sol";
+import "./WrappedLendingPoolToken.sol";
 
 contract LPTokenWrapper {
     using SafeMath for uint256;
 
-    address public constant erc20LendingPool = address(
-        0x181Aea6936B407514ebFC0754A37704eB8d98F91
+    address public constant wrappedLendingPoolTokenAddress = address(
+        0xf278DDe7F235D1736d1981a036637A5B9Cf20316
     );
 
-    LockedLendingPoolNft private lendingPoolNft;
+    WrappedLendingPoolToken private wrappedLendingPoolToken;
 
     uint256 private countNftStaked;
     uint256 private countLpTokensStaked;
@@ -20,7 +20,7 @@ contract LPTokenWrapper {
     mapping(address => LLPNFT[]) private owned;
 
     constructor() public {
-        lendingPoolNft = LockedLendingPoolNft(erc20LendingPool);
+        wrappedLendingPoolToken = WrappedLendingPoolToken(wrappedLendingPoolTokenAddress);
     }
 
     function totalStaked() public view returns (uint256) {
@@ -84,38 +84,38 @@ contract LPTokenWrapper {
         public
         view
         returns (
-            uint256 lockStart,
-            uint256 lockEnd,
-            uint256 amount
+    bool
+//            uint256 ,
+//            uint256 ,
+//            uint256
         )
     {
-        (uint256 lockStart, uint256 lockEnd, uint256 amount, ) = lendingPoolNft
-            .getTokenById(_id);
+        wrappedLendingPoolToken.getToken(_id);
 
-        return (lockStart, lockEnd, amount);
+        return true;
     }
 
     function stake(uint256 _tokenId) public virtual {
-        (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
-            _tokenId
-        );
+//        (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
+//            _tokenId
+//        );
 
-        require(
-            lockEnd - 24 hours > block.timestamp,
-            "Cover has expired or is 24 hours away from expiring!"
-        );
-
-        require(amount > 0, "Staked amount must be more than 0");
-
-        owned[msg.sender].push(
-            LLPNFT(lockStart, lockEnd, amount, _tokenId, false)
-        );
-
-        countNftStaked = countNftStaked.add(1);
-        countLpTokensStaked = countLpTokensStaked.add(amount);
-        myStake[msg.sender] = myStake[msg.sender].add(amount);
-
-        lendingPoolNft.transferFrom(msg.sender, address(this), _tokenId);
+        //        require(
+        //            lockEnd - 24 hours > block.timestamp,
+        //            "Cover has expired or is 24 hours away from expiring!"
+        //        );
+        //
+        //        require(amount > 0, "Staked amount must be more than 0");
+        //
+        //        owned[msg.sender].push(
+        //            LLPNFT(lockStart, lockEnd, amount, _tokenId, false)
+        //        );
+        //
+        //        countNftStaked = countNftStaked.add(1);
+        //        countLpTokensStaked = countLpTokensStaked.add(amount);
+        //        myStake[msg.sender] = myStake[msg.sender].add(amount);
+        //
+        //        lendingPoolNft.transferFrom(msg.sender, address(this), _tokenId);
     }
 
     function withdraw(uint256 _tokenId) public virtual {
@@ -133,7 +133,7 @@ contract LPTokenWrapper {
                 );
 
                 owned[msg.sender][i].isWithdrawn = true;
-                lendingPoolNft.transferFrom(
+                wrappedLendingPoolToken.transferFrom(
                     address(this),
                     msg.sender,
                     _tokenId

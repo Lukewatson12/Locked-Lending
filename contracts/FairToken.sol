@@ -7,12 +7,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract FairToken is ERC20 {
     using SafeERC20 for IERC20;
     using Address for address;
-    using SafeMath for uint;
+    using SafeMath for uint256;
 
     address public governance;
-    mapping (address => bool) public minters;
+    mapping(address => bool) public minters;
 
-    constructor () public ERC20("Fair distribution token", "FAIR") {
+    constructor() public ERC20("Fair distribution token", "FAIR") {
         governance = tx.origin;
     }
 

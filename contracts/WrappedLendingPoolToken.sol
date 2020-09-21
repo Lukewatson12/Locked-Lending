@@ -4,11 +4,11 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interface/iLockedLendingPoolToken.sol";
-import "./MintableErc20.sol";
+import "./LendingPoolErc20.sol";
 import "./interface/iLockedLendingPoolToken.sol";
 
 // Can look at > https://eips.ethereum.org/EIPS/eip-1155
-contract LockedLendingPoolNft is ERC721, iLockedLendingPoolToken {
+contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
@@ -97,5 +97,18 @@ contract LockedLendingPoolNft is ERC721, iLockedLendingPoolToken {
             LLPNFTMapping[_id].amount,
             LLPNFTMapping[_id].isEntity
         );
+    }
+
+    function getToken(uint256 _id)
+        external
+        view
+        returns (uint256)
+    {
+        return (1);
+//        return (
+//            LLPNFTMapping[_id].lockStart,
+//            LLPNFTMapping[_id].lockEnd,
+//            LLPNFTMapping[_id].amount
+//        );
     }
 }

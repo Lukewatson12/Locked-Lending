@@ -6,13 +6,15 @@ import "./interface/IRewardDistributionRecipient.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/Math.sol";
 
-contract LockedLendingErc20Pool is
+contract NftPool is
     LPTokenWrapper,
     IRewardDistributionRecipient
 {
     using SafeERC20 for IERC20;
 
-    FairToken public fairToken = FairToken(0xA193E42526F1FEA8C99AF609dcEabf30C1c29fAA);
+    FairToken public fairToken = FairToken(
+        0xA193E42526F1FEA8C99AF609dcEabf30C1c29fAA
+    );
 
     uint256 public constant DURATION = 30 days;
 
@@ -52,9 +54,14 @@ contract LockedLendingErc20Pool is
         }
         _;
     }
+
     modifier checkStart() {
         require(block.timestamp > startTime, "Pool is not open yet");
         _;
+    }
+
+    function hasPoolStarted() internal view returns (bool) {
+        return block.timestamp >= startTime;
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
@@ -65,6 +72,7 @@ contract LockedLendingErc20Pool is
         if (totalSupply() == 0) {
             return rewardPerTokenStored;
         }
+
         return
             rewardPerTokenStored.add(
                 lastTimeRewardApplicable()
@@ -76,6 +84,11 @@ contract LockedLendingErc20Pool is
     }
 
     function earned(address account) public view returns (uint256) {
+        // @dev if this pool has not yet opened, the reward will be null
+        if (false == hasPoolStarted()) {
+            return 0;
+        }
+
         return
             balanceOf(account)
                 .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
@@ -89,10 +102,9 @@ contract LockedLendingErc20Pool is
         override
         updateReward(msg.sender)
         checkHalve
-    //        checkStart
     {
-        //        require(tokenId >= 0, "token id must be >= 0");
-        //        super.stake(tokenId);
+        require(tokenId >= 0, "token id must be >= 0");
+        super.stake(tokenId);
         //        emit Staked(msg.sender, tokenId);
     }
 
@@ -100,7 +112,6 @@ contract LockedLendingErc20Pool is
         public
         updateReward(msg.sender)
         checkHalve
-        checkStart
     {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(tokenIds[i] >= 0, "Token id must be >= 0");
@@ -114,7 +125,6 @@ contract LockedLendingErc20Pool is
         override
         updateReward(msg.sender)
         checkHalve
-        checkStart
     {
         require(tokenId >= 0, "token id must be >= 0");
         require(numStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
@@ -126,7 +136,6 @@ contract LockedLendingErc20Pool is
         public
         updateReward(msg.sender)
         checkHalve
-        checkStart
     {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(tokenIds[i] >= 0, "Token id must be >= 0");
@@ -135,13 +144,7 @@ contract LockedLendingErc20Pool is
         }
     }
 
-    function withdrawAll()
-        public
-        override
-        updateReward(msg.sender)
-        checkHalve
-        checkStart
-    {
+    function withdrawAll() public override updateReward(msg.sender) checkHalve {
         require(numStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
         super.withdrawAll();
         emit WithdrawnAll(msg.sender);
@@ -152,7 +155,7 @@ contract LockedLendingErc20Pool is
         getReward();
     }
 
-    function getReward() public updateReward(msg.sender) checkHalve checkStart {
+    function getReward() public updateReward(msg.sender) checkHalve {
         uint256 reward = earned(msg.sender);
         if (reward > 0) {
             rewards[msg.sender] = 0;

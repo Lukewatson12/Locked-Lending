@@ -1,14 +1,14 @@
 import chai from "chai";
-import {LockedLendingPoolNft} from "../typechain/LockedLendingPoolNft";
+import {WrappedLendingPoolToken} from "../typechain/WrappedLendingPoolToken";
 import {BigNumber} from "ethers";
 import {
   deployLendingPoolErc20,
-  wrappedLendingPoolToken,
+  deployWrappedLendingPoolToken,
   getBlockTime,
   getProvider,
   wait,
 } from "./helpers/contract";
-import {oneHour} from "./helpers/numbers";
+import {oneHour, oneMonth} from "./helpers/numbers";
 import {LendingPoolErc20} from "../typechain/LendingPoolErc20";
 
 const {expect} = chai;
@@ -18,7 +18,7 @@ const [alice, bob] = getProvider().getWallets();
 describe("Locked Lending Pool Token", () => {
   const oneEther = BigNumber.from(10).pow(18);
 
-  let lockedLendingPoolNft: LockedLendingPoolNft;
+  let lockedLendingPoolNft: WrappedLendingPoolToken;
   let lendingPoolErc20: LendingPoolErc20;
   let timestamp: number;
   let amount = oneEther.mul(100);
@@ -27,7 +27,10 @@ describe("Locked Lending Pool Token", () => {
     timestamp = await getBlockTime();
 
     lendingPoolErc20 = await deployLendingPoolErc20(alice);
-    lockedLendingPoolNft = await wrappedLendingPoolToken(alice, lendingPoolErc20);
+    lockedLendingPoolNft = await deployWrappedLendingPoolToken(
+      alice,
+      lendingPoolErc20
+    );
   });
 
   it("Should mint a Locked Lending Pool Token", async () => {
@@ -37,7 +40,7 @@ describe("Locked Lending Pool Token", () => {
       expect(llpToken.amount).to.eq(amount);
       expect(llpToken.lockStart.toNumber()).to.be.approximately(timestamp, 10);
       expect(llpToken.lockEnd.toNumber()).to.be.approximately(
-        timestamp + oneHour,
+        timestamp + oneMonth,
         10
       );
       expect(llpToken.isEntity).to.be.true;
@@ -47,9 +50,11 @@ describe("Locked Lending Pool Token", () => {
   it("Should transfer the LP tokens into the Lock contract", async () => {
     await setupLendingPoolLock();
 
-    await lendingPoolErc20.balanceOf(lockedLendingPoolNft.address).then((balance) => {
-      expect(balance).to.eq(amount);
-    });
+    await lendingPoolErc20
+      .balanceOf(lockedLendingPoolNft.address)
+      .then((balance) => {
+        expect(balance).to.eq(amount);
+      });
 
     await lendingPoolErc20.balanceOf(alice.address).then((balance) => {
       expect(balance).to.eq(oneEther.mul(400));
@@ -67,13 +72,15 @@ describe("Locked Lending Pool Token", () => {
   it("Should allow withdrawal if the lock period has been elapsed", async () => {
     await setupLendingPoolLock();
 
-    await wait(oneHour);
+    await wait(oneMonth);
 
     await lockedLendingPoolNft.withdraw(1);
 
-    await lendingPoolErc20.balanceOf(lockedLendingPoolNft.address).then((balance) => {
-      expect(balance).to.eq(0);
-    });
+    await lendingPoolErc20
+      .balanceOf(lockedLendingPoolNft.address)
+      .then((balance) => {
+        expect(balance).to.eq(0);
+      });
 
     await lendingPoolErc20.balanceOf(alice.address).then((balance) => {
       expect(balance).to.eq(oneEther.mul(500));
@@ -83,7 +90,7 @@ describe("Locked Lending Pool Token", () => {
   it("Should burn the lendingPoolErc20 after withdrawal", async () => {
     await setupLendingPoolLock();
 
-    await wait(oneHour);
+    await wait(oneMonth);
 
     await lockedLendingPoolNft.withdraw(1);
 
@@ -99,7 +106,18 @@ describe("Locked Lending Pool Token", () => {
     );
   });
 
+  it("Should disallow creation of a lock with FINISHED lock period set", async () => {
+    await expect(
+      lockedLendingPoolNft.lockLendingPoolToken(amount, 0)
+    ).to.be.revertedWith("Must set a valid lock period");
+  });
+
+  it("Should only allow for valid lock periods", async () => {
+    await expect(lockedLendingPoolNft.lockLendingPoolToken(amount, 420)).to.be
+      .reverted;
+  });
+
   async function setupLendingPoolLock() {
-    await lockedLendingPoolNft.lockLendingPoolToken(amount, oneHour);
+    await lockedLendingPoolNft.lockLendingPoolToken(amount, 1);
   }
 });

@@ -26,7 +26,7 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
         lendingPoolToken = IERC20(_lendingPoolTokenAddress);
     }
 
-    function lockLendingPoolToken(uint256 _amount, uint256 _duration)
+    function lockLendingPoolToken(uint256 _amount, LockPeriod _lockPeriod)
         public
         override
         returns (uint256)
@@ -35,12 +35,14 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
             lendingPoolToken.allowance(msg.sender, address(this)) >= _amount,
             "Not enough allowance"
         );
+
         require(
             lendingPoolToken.balanceOf(msg.sender) >= _amount,
             "Not enough LP tokens"
         );
+
         require(_amount > 0, "Amount must be above 0");
-        require(_duration > 0, "Duration must be more than 0 seconds");
+        require(_lockPeriod != LockPeriod.FINISHED, "Must set a valid lock period");
 
         tokenIds.increment();
         uint256 lockedLendingPoolTokenId = tokenIds.current();
@@ -48,8 +50,9 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
 
         LLPNFTMapping[lockedLendingPoolTokenId] = iLockedLendingPoolToken
             .LLPNFT({
+            lockPeriod: _lockPeriod,
             lockStart: block.timestamp,
-            lockEnd: block.timestamp.add(_duration),
+            lockEnd: block.timestamp.add(determineLockDuration(_lockPeriod)),
             amount: _amount,
             isEntity: true
         });
@@ -72,6 +75,7 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
         _burn(_id);
 
         LLPNFTMapping[_id] = iLockedLendingPoolToken.LLPNFT({
+            lockPeriod: LockPeriod.FINISHED,
             lockStart: 0,
             lockEnd: 0,
             amount: 0,
@@ -113,5 +117,21 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
             LLPNFTMapping[_id].lockEnd,
             LLPNFTMapping[_id].amount
         );
+    }
+
+    function determineLockDuration(LockPeriod _lockPeriod)
+        internal
+        view
+        returns (uint256)
+    {
+        if (_lockPeriod == LockPeriod.THREE_MONTHS) {
+            return 31 days;
+        } else if (_lockPeriod == LockPeriod.SIX_MONTHS) {
+            return 183 days;
+        } else if (_lockPeriod == LockPeriod.TWELVE_MONTHS) {
+            return 365 days;
+        }
+
+        revert("Unable to determine lock period, reverting");
     }
 }

@@ -2,13 +2,21 @@ pragma solidity ^0.6.0;
 
 interface iLockedLendingPoolToken {
     struct LLPNFT {
+        LockPeriod lockPeriod;
         uint256 lockStart;
         uint256 lockEnd;
         uint256 amount;
         bool isEntity;
     }
 
-    function lockLendingPoolToken(uint256 _amount, uint256 _duration)
+    enum LockPeriod {
+        FINISHED,
+        THREE_MONTHS,
+        SIX_MONTHS,
+        TWELVE_MONTHS
+    }
+
+    function lockLendingPoolToken(uint256 _amount, LockPeriod _lockPeriod)
         external
         virtual
         returns (uint256);

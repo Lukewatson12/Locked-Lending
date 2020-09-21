@@ -51,11 +51,12 @@ contract LPTokenWrapper is IERC721Receiver {
         uint256 numberOfLendingPoolTokens
     ) public view returns (uint256) {
         return 10;
-        // generationTime is in milliseconds, expirationTimestamp is in seconds
-        //        uint256 x = block.timestamp.mul(1000).sub(generationTime);
-        //        uint256 y = expirationTimestamp.mul(1000).sub(generationTime);
+        //        uint256 timeSinceLock = block.timestamp.sub(lockStart);
+        //        uint256 totalLockTime = lockEnd.sub(generationTime);
+        //
         //        uint256 multiplier = 100000;
-        //        uint256 per = x.mul(multiplier).div(y);
+        //        uint256 per = timeSinceLock.mul(multiplier).div(totalLockTime);
+        //
         //        return multiplier.sub(per).mul(coverAmount).div(multiplier);
     }
 
@@ -72,13 +73,13 @@ contract LPTokenWrapper is IERC721Receiver {
     }
 
     function getToken(uint256 _id)
-    public
-    view
-    returns (
-        uint256,
-        uint256,
-        uint256
-    )
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
     {
         return wrappedLendingPoolToken.getToken(_id);
     }
@@ -95,7 +96,11 @@ contract LPTokenWrapper is IERC721Receiver {
 
         require(amount > 0, "Staked amount must be more than 0");
 
-        uint256 lendingValue = calculateLendingValue(lockStart, lockEnd, amount);
+        uint256 lendingValue = calculateLendingValue(
+            lockStart,
+            lockEnd,
+            amount
+        );
 
         owned[msg.sender].push(
             LLPNFT(_tokenId, lockStart, lockEnd, amount, lendingValue, false)

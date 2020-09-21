@@ -58,6 +58,10 @@ describe("Locked Lending Pool Token", () => {
     alicePool = await pool.connect(alice);
   });
 
+  it("Should calculate the amount of value wrapped in each NFT ", async () => {
+    await pool.calculateLendingValue(timestamp, timestamp + 1000);
+  });
+
   it("Should allow a token to be staked and update views to reflect", async () => {
     await setupLendingPoolLock();
 

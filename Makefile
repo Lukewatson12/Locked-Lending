@@ -12,7 +12,7 @@ compile-clean:
 	make compile
 
 test:
-	npm run-script test test/NftPoolTest.ts
+	npm run-script test test/LockedLendingPoolNftTest.ts
 
 run-node:
 	@npx buidler node

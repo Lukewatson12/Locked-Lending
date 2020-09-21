@@ -102,7 +102,7 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     {
         require(tokenId >= 0, "token id must be >= 0");
         super.stake(tokenId);
-        //        emit Staked(msg.sender, tokenId);
+        emit Staked(msg.sender, tokenId);
     }
 
     function stakeMultiple(uint256[] memory tokenIds)

@@ -99,12 +99,19 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
         );
     }
 
-    function getToken(uint256 _id) external view returns (uint256) {
-        return (1);
-        //        return (
-        //            LLPNFTMapping[_id].lockStart,
-        //            LLPNFTMapping[_id].lockEnd,
-        //            LLPNFTMapping[_id].amount
-        //        );
+    function getToken(uint256 _id)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            LLPNFTMapping[_id].lockStart,
+            LLPNFTMapping[_id].lockEnd,
+            LLPNFTMapping[_id].amount
+        );
     }
 }

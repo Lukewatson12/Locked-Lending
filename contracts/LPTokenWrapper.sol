@@ -1,9 +1,10 @@
 pragma solidity ^0.6.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./WrappedLendingPoolToken.sol";
 
-contract LPTokenWrapper {
+contract LPTokenWrapper is IERC721Receiver {
     using SafeMath for uint256;
 
     address public constant wrappedLendingPoolTokenAddress = address(
@@ -85,36 +86,35 @@ contract LPTokenWrapper {
     function getToken(uint256 _id)
         public
         view
-        returns (bool)
-    //            uint256 ,
-    //            uint256 ,
-    //            uint256
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
     {
-        wrappedLendingPoolToken.getToken(_id);
-
-        return true;
+        return wrappedLendingPoolToken.getToken(_id);
     }
 
     function stake(uint256 _tokenId) public virtual {
-        //        (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
-        //            _tokenId
-        //        );
-        //        require(
-        //            lockEnd - 24 hours > block.timestamp,
-        //            "Cover has expired or is 24 hours away from expiring!"
-        //        );
-        //
-        //        require(amount > 0, "Staked amount must be more than 0");
-        //
-        //        owned[msg.sender].push(
-        //            LLPNFT(lockStart, lockEnd, amount, _tokenId, false)
-        //        );
-        //
-        //        countNftStaked = countNftStaked.add(1);
-        //        countLpTokensStaked = countLpTokensStaked.add(amount);
-        //        myStake[msg.sender] = myStake[msg.sender].add(amount);
-        //
-        //        lendingPoolNft.transferFrom(msg.sender, address(this), _tokenId);
+        (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
+            _tokenId
+        );
+        require(
+            lockEnd - 24 hours > block.timestamp,
+            "Cover has expired or is 24 hours away from expiring!"
+        );
+
+        require(amount > 0, "Staked amount must be more than 0");
+
+        owned[msg.sender].push(
+            LLPNFT(_tokenId, lockStart, lockEnd, amount, false)
+        );
+
+        countNftStaked = countNftStaked.add(1);
+        countLpTokensStaked = countLpTokensStaked.add(amount);
+        myStake[msg.sender] = myStake[msg.sender].add(amount);
+
+        wrappedLendingPoolToken.safeTransferFrom(msg.sender, address(this), _tokenId);
     }
 
     function withdraw(uint256 _tokenId) public virtual {

@@ -1,6 +1,12 @@
 import chai from "chai";
 import {BigNumber} from "ethers";
-import {deployLendingPoolErc20, deployWrappedLendingPoolToken, getBlockTime, getProvider,} from "./helpers/contract";
+import {
+  deployLendingPoolErc20,
+  deployWrappedLendingPoolToken,
+  getBlockTime,
+  getProvider,
+  wait,
+} from "./helpers/contract";
 import {deployContract} from "ethereum-waffle";
 
 import FairTokenArtifact from "../artifacts/FairToken.json";
@@ -51,16 +57,13 @@ describe("Locked Lending Pool Token", () => {
 
   it("Should accept a Locked Lending pool token and calculate the reward based on the total amount & duration", async () => {
     await setupLendingPoolLock();
+    await wrappedLendingPoolToken.approve(pool.address, 1);
 
-    // await pool.getToken(1).then(console.log)
-    // await pool.getToken(1, {"gasLimit": 9888889});
-
-
-    // await pool.stake(1);
-    // await pool.rewardPerToken().then(console.log);
+    const alicePool = await pool.connect(alice);
+    await alicePool.stake(1);
   });
 
   async function setupLendingPoolLock() {
-    await wrappedLendingPoolToken.lockLendingPoolToken(amount, oneHour);
+    await wrappedLendingPoolToken.lockLendingPoolToken(amount, (oneHour * 48));
   }
 });

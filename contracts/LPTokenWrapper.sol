@@ -125,6 +125,7 @@ contract LPTokenWrapper is IERC721Receiver {
                 !owned[msg.sender][i].isWithdrawn
             ) {
                 countNftStaked = countNftStaked.sub(1);
+                // todo removing the wrong thing
                 countLpTokensStaked = countLpTokensStaked.sub(
                     owned[msg.sender][i].lendingPoolTokens
                 );

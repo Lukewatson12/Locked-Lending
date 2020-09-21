@@ -20,7 +20,9 @@ contract LPTokenWrapper {
     mapping(address => LLPNFT[]) private owned;
 
     constructor() public {
-        wrappedLendingPoolToken = WrappedLendingPoolToken(wrappedLendingPoolTokenAddress);
+        wrappedLendingPoolToken = WrappedLendingPoolToken(
+            wrappedLendingPoolTokenAddress
+        );
     }
 
     function totalStaked() public view returns (uint256) {
@@ -83,12 +85,10 @@ contract LPTokenWrapper {
     function getToken(uint256 _id)
         public
         view
-        returns (
-    bool
-//            uint256 ,
-//            uint256 ,
-//            uint256
-        )
+        returns (bool)
+    //            uint256 ,
+    //            uint256 ,
+    //            uint256
     {
         wrappedLendingPoolToken.getToken(_id);
 
@@ -96,10 +96,9 @@ contract LPTokenWrapper {
     }
 
     function stake(uint256 _tokenId) public virtual {
-//        (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
-//            _tokenId
-//        );
-
+        //        (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
+        //            _tokenId
+        //        );
         //        require(
         //            lockEnd - 24 hours > block.timestamp,
         //            "Cover has expired or is 24 hours away from expiring!"

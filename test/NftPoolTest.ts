@@ -52,7 +52,7 @@ describe("Locked Lending Pool Token", () => {
   it("Should accept a Locked Lending pool token and calculate the reward based on the total amount & duration", async () => {
     await setupLendingPoolLock();
 
-    // await lockedLendingPoolNft.getToken(1).then(console.log)
+    // await pool.getToken(1).then(console.log)
     // await pool.getToken(1, {"gasLimit": 9888889});
 
 

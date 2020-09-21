@@ -6,10 +6,7 @@ import "./interface/IRewardDistributionRecipient.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/Math.sol";
 
-contract NftPool is
-    LPTokenWrapper,
-    IRewardDistributionRecipient
-{
+contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     using SafeERC20 for IERC20;
 
     FairToken public fairToken = FairToken(

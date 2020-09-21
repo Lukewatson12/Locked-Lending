@@ -58,8 +58,16 @@ describe("Locked Lending Pool Token", () => {
     alicePool = await pool.connect(alice);
   });
 
-  it("Should calculate the amount of value wrapped in each NFT ", async () => {
-    // await pool.calculateLendingValue(timestamp, timestamp + 1000);
+  it("Should calculate the amount of lending value given different lock periods ", async () => {
+    await pool.calculateLendingValue(1, 1000).then((lockValue) => {
+      expect(lockValue).to.eq(10000);
+    });
+    await pool.calculateLendingValue(2, 1000).then((lockValue) => {
+      expect(lockValue).to.eq(25000);
+    });
+    await pool.calculateLendingValue(3, 1000).then((lockValue) => {
+      expect(lockValue).to.eq(75000);
+    });
   });
 
   it("Should allow a token to be staked and update views to reflect", async () => {

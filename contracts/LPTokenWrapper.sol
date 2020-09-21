@@ -7,9 +7,7 @@ import "./WrappedLendingPoolToken.sol";
 contract LPTokenWrapper is IERC721Receiver {
     using SafeMath for uint256;
 
-    address public constant wrappedLendingPoolTokenAddress = address(
-        0xf278DDe7F235D1736d1981a036637A5B9Cf20316
-    );
+    bytes4 private constant _ERC721_RECEIVED = 0x150b7a02;
 
     WrappedLendingPoolToken private wrappedLendingPoolToken;
 
@@ -20,10 +18,9 @@ contract LPTokenWrapper is IERC721Receiver {
     mapping(address => uint256) private myStake;
     mapping(address => LLPNFT[]) private owned;
 
-    constructor() public {
-        wrappedLendingPoolToken = WrappedLendingPoolToken(
-            wrappedLendingPoolTokenAddress
-        );
+    // todo this is terrible
+    function setWrappedLendingPoolToken(address _address) public {
+        wrappedLendingPoolToken = WrappedLendingPoolToken(_address);
     }
 
     function totalStaked() public view returns (uint256) {
@@ -38,16 +35,6 @@ contract LPTokenWrapper is IERC721Receiver {
         return myStake[_account];
     }
 
-    function calculateCoverValue(
-        uint256 amount,
-        uint256 lockStart,
-        uint256 lockEnd
-    ) public view returns (uint256) {
-        return 10;
-        //        uint256 per = x.mul(multiplier).div(y);
-        //        return multiplier.sub(per).mul(coverAmount).div(multiplier);
-    }
-
     function numStaked(address account) public view returns (uint256) {
         uint256 staked = 0;
         for (uint256 i = 0; i < owned[account].length; i++) {
@@ -58,17 +45,18 @@ contract LPTokenWrapper is IERC721Receiver {
         return staked;
     }
 
-    function calculateStakeValue(
-        uint256 coverAmount,
-        uint256 generationTime,
-        uint256 expirationTimestamp
+    function calculateLendingValue(
+        uint256 lockStart,
+        uint256 lockEnd,
+        uint256 numberOfLendingPoolTokens
     ) public view returns (uint256) {
+        return 10;
         // generationTime is in milliseconds, expirationTimestamp is in seconds
-        uint256 x = block.timestamp.mul(1000).sub(generationTime);
-        uint256 y = expirationTimestamp.mul(1000).sub(generationTime);
-        uint256 multiplier = 100000;
-        uint256 per = x.mul(multiplier).div(y);
-        return multiplier.sub(per).mul(coverAmount).div(multiplier);
+        //        uint256 x = block.timestamp.mul(1000).sub(generationTime);
+        //        uint256 y = expirationTimestamp.mul(1000).sub(generationTime);
+        //        uint256 multiplier = 100000;
+        //        uint256 per = x.mul(multiplier).div(y);
+        //        return multiplier.sub(per).mul(coverAmount).div(multiplier);
     }
 
     function idsStaked(address account) public view returns (uint256[] memory) {
@@ -84,13 +72,13 @@ contract LPTokenWrapper is IERC721Receiver {
     }
 
     function getToken(uint256 _id)
-        public
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
+    public
+    view
+    returns (
+        uint256,
+        uint256,
+        uint256
+    )
     {
         return wrappedLendingPoolToken.getToken(_id);
     }
@@ -99,6 +87,7 @@ contract LPTokenWrapper is IERC721Receiver {
         (uint256 lockStart, uint256 lockEnd, uint256 amount) = getToken(
             _tokenId
         );
+
         require(
             lockEnd - 24 hours > block.timestamp,
             "Cover has expired or is 24 hours away from expiring!"
@@ -106,15 +95,21 @@ contract LPTokenWrapper is IERC721Receiver {
 
         require(amount > 0, "Staked amount must be more than 0");
 
+        uint256 lendingValue = calculateLendingValue(lockStart, lockEnd, amount);
+
         owned[msg.sender].push(
-            LLPNFT(_tokenId, lockStart, lockEnd, amount, false)
+            LLPNFT(_tokenId, lockStart, lockEnd, amount, lendingValue, false)
         );
 
         countNftStaked = countNftStaked.add(1);
         countLpTokensStaked = countLpTokensStaked.add(amount);
         myStake[msg.sender] = myStake[msg.sender].add(amount);
 
-        wrappedLendingPoolToken.safeTransferFrom(msg.sender, address(this), _tokenId);
+        wrappedLendingPoolToken.safeTransferFrom(
+            msg.sender,
+            address(this),
+            _tokenId
+        );
     }
 
     function withdraw(uint256 _tokenId) public virtual {
@@ -125,10 +120,10 @@ contract LPTokenWrapper is IERC721Receiver {
             ) {
                 countNftStaked = countNftStaked.sub(1);
                 countLpTokensStaked = countLpTokensStaked.sub(
-                    owned[msg.sender][i].amount
+                    owned[msg.sender][i].lendingPoolTokens
                 );
                 myStake[msg.sender] = myStake[msg.sender].sub(
-                    owned[msg.sender][i].amount
+                    owned[msg.sender][i].lendingPoolTokens
                 );
 
                 owned[msg.sender][i].isWithdrawn = true;
@@ -153,7 +148,17 @@ contract LPTokenWrapper is IERC721Receiver {
         uint256 id;
         uint256 lockStart;
         uint256 lockEnd;
-        uint256 amount;
+        uint256 lendingPoolTokens;
+        uint256 lendingValue;
         bool isWithdrawn;
+    }
+
+    function onERC721Received(
+        address operator,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external override returns (bytes4) {
+        return _ERC721_RECEIVED;
     }
 }

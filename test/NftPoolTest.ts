@@ -30,6 +30,7 @@ describe("Locked Lending Pool Token", () => {
   let lendingPoolToken: LendingPoolErc20;
   let token: FairToken;
   let pool: NftPool;
+  let alicePool: NftPool;
 
   let timestamp: number;
   let amount = oneEther.mul(100);
@@ -40,30 +41,43 @@ describe("Locked Lending Pool Token", () => {
     timestamp = await getBlockTime();
 
     wrappedLendingPoolToken = await deployWrappedLendingPoolToken(
-        alice,
-        lendingPoolToken
+      alice,
+      lendingPoolToken
     );
 
-    pool = (await deployContract(
-      deployer,
-        NftPoolArtifact
-    )) as NftPool;
+    pool = (await deployContract(deployer, NftPoolArtifact)) as NftPool;
+
+    await pool.setWrappedLendingPoolToken(wrappedLendingPoolToken.address);
+    await pool.setToken(token.address);
 
     await token.addMinter(pool.address);
 
     await pool.setRewardDistribution(deployer.address);
     await pool.notifyRewardAmount(oneEther.mul(10000));
+
+    alicePool = await pool.connect(alice);
   });
 
-  it("Should accept a Locked Lending pool token and calculate the reward based on the total amount & duration", async () => {
+  it("Should allow a token to be staked and update views to reflect", async () => {
     await setupLendingPoolLock();
-    await wrappedLendingPoolToken.approve(pool.address, 1);
 
-    const alicePool = await pool.connect(alice);
+    await alicePool.stake(1);
+    await pool.totalStaked().then((totalStaked) => {
+      expect(totalStaked).to.eq(amount);
+    });
+
+    await pool.balanceOf(alice.address).then((aliceStake) => {
+      expect(aliceStake).to.eq(amount);
+    });
+  });
+
+  it("Should calculate the reward based on the total amount & duration", async () => {
+    await setupLendingPoolLock();
     await alicePool.stake(1);
   });
 
   async function setupLendingPoolLock() {
-    await wrappedLendingPoolToken.lockLendingPoolToken(amount, (oneHour * 48));
+    await wrappedLendingPoolToken.lockLendingPoolToken(amount, oneHour * 48);
+    await wrappedLendingPoolToken.approve(pool.address, 1);
   }
 });

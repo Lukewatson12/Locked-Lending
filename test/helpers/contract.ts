@@ -34,9 +34,11 @@ export async function deployWrappedLendingPoolToken(
   signer: Signer,
   token: LendingPoolErc20
 ) {
-  const wrappedLendingPoolToken = (await deployContract(signer, WrappedLendingPoolTokenArtifact, [
-    token.address,
-  ])) as WrappedLendingPoolToken;
+  const wrappedLendingPoolToken = (await deployContract(
+    signer,
+    WrappedLendingPoolTokenArtifact,
+    [token.address]
+  )) as WrappedLendingPoolToken;
 
   await signer
     .getAddress()

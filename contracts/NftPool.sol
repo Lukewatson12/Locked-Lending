@@ -9,9 +9,12 @@ import "@openzeppelin/contracts/math/Math.sol";
 contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     using SafeERC20 for IERC20;
 
-    FairToken public fairToken = FairToken(
-        0xA193E42526F1FEA8C99AF609dcEabf30C1c29fAA
-    );
+    FairToken public fairToken;
+
+    // todo remove
+    function setToken(address _address) public {
+        fairToken = FairToken(_address);
+    }
 
     uint256 public constant DURATION = 30 days;
 

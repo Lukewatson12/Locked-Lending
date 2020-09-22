@@ -2,13 +2,13 @@ import {Signer} from "ethers";
 import {deployContract, MockProvider} from "ethereum-waffle";
 import {oneEther} from "./numbers";
 
-import LendingPoolErc20Artifact from "../../artifacts/LendingPoolErc20.json";
-import WrappedLendingPoolTokenArtifact from "../../artifacts/WrappedLendingPoolToken.json";
+import LiquidityPoolErc20Artifact from "../../artifacts/LiquidityPoolErc20.json";
+import WrappedLiquidityPoolTokenArtifact from "../../artifacts/WrappedLiquidityPoolToken.json";
 import FairTokenArtifact from "../../artifacts/FairToken.json";
 
 import {FairToken} from "../../typechain/FairToken";
-import {LendingPoolErc20} from "../../typechain/LendingPoolErc20";
-import {WrappedLendingPoolToken} from "../../typechain/WrappedLendingPoolToken";
+import {LiquidityPoolErc20} from "../../typechain/LiquidityPoolErc20";
+import {WrappedLiquidityPoolToken} from "../../typechain/WrappedLiquidityPoolToken";
 
 let provider: MockProvider;
 
@@ -23,30 +23,30 @@ export async function deployFairToken(signer: Signer) {
   return (await deployContract(signer, FairTokenArtifact)) as FairToken;
 }
 
-export async function deployLendingPoolErc20(signer: Signer) {
-  return (await deployContract(signer, LendingPoolErc20Artifact, [
-    "LENDING POOL",
+export async function deployLiquidityPoolErc20(signer: Signer) {
+  return (await deployContract(signer, LiquidityPoolErc20Artifact, [
+    "LIQUIDITY POOL",
     "LEND",
-  ])) as LendingPoolErc20;
+  ])) as LiquidityPoolErc20;
 }
 
-export async function deployWrappedLendingPoolToken(
+export async function deployWrappedLiquidityPoolToken(
   signer: Signer,
-  token: LendingPoolErc20
+  token: LiquidityPoolErc20
 ) {
-  const wrappedLendingPoolToken = (await deployContract(
+  const wrappedLiquidityPoolToken = (await deployContract(
     signer,
-    WrappedLendingPoolTokenArtifact,
+    WrappedLiquidityPoolTokenArtifact,
     [token.address]
-  )) as WrappedLendingPoolToken;
+  )) as WrappedLiquidityPoolToken;
 
   await signer
     .getAddress()
     .then((address) => token.mint(address, oneEther.mul(500)));
 
-  await token.approve(wrappedLendingPoolToken.address, oneEther.mul(500));
+  await token.approve(wrappedLiquidityPoolToken.address, oneEther.mul(500));
 
-  return wrappedLendingPoolToken;
+  return wrappedLiquidityPoolToken;
 }
 
 export async function wait(amountOfTimeToWait: number) {

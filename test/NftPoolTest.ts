@@ -1,8 +1,8 @@
 import chai from "chai";
 import {BigNumber} from "ethers";
 import {
-  deployLendingPoolErc20,
-  deployWrappedLendingPoolToken,
+  deployLiquidityPoolErc20,
+  deployWrappedLiquidityPoolToken,
   getBlockTime,
   getProvider,
   wait,
@@ -14,8 +14,8 @@ import NftPoolArtifact from "../artifacts/NftPool.json";
 
 import {NftPool} from "../typechain/NftPool";
 import {FairToken} from "../typechain/FairToken";
-import {WrappedLendingPoolToken} from "../typechain/WrappedLendingPoolToken";
-import {LendingPoolErc20} from "../typechain/LendingPoolErc20";
+import {WrappedLiquidityPoolToken} from "../typechain/WrappedLiquidityPoolToken";
+import {LiquidityPoolErc20} from "../typechain/LiquidityPoolErc20";
 
 import {oneHour} from "./helpers/numbers";
 
@@ -23,11 +23,11 @@ const {expect} = chai;
 
 const [deployer, alice] = getProvider().getWallets();
 
-describe("Locked Lending Pool Token", () => {
+describe("Locked Liquidity Pool Token", () => {
   const oneEther = BigNumber.from(10).pow(18);
 
-  let wrappedLendingPoolToken: WrappedLendingPoolToken;
-  let lendingPoolToken: LendingPoolErc20;
+  let wrappedLiquidityPoolToken: WrappedLiquidityPoolToken;
+  let liquidityPoolToken: LiquidityPoolErc20;
   let token: FairToken;
   let pool: NftPool;
   let alicePool: NftPool;
@@ -37,17 +37,17 @@ describe("Locked Lending Pool Token", () => {
 
   beforeEach(async () => {
     token = (await deployContract(deployer, FairTokenArtifact)) as FairToken;
-    lendingPoolToken = await deployLendingPoolErc20(alice);
+    liquidityPoolToken = await deployLiquidityPoolErc20(alice);
     timestamp = await getBlockTime();
 
-    wrappedLendingPoolToken = await deployWrappedLendingPoolToken(
+    wrappedLiquidityPoolToken = await deployWrappedLiquidityPoolToken(
       alice,
-      lendingPoolToken
+      liquidityPoolToken
     );
 
     pool = (await deployContract(deployer, NftPoolArtifact)) as NftPool;
 
-    await pool.setWrappedLendingPoolToken(wrappedLendingPoolToken.address);
+    await pool.setWrappedLiquidityPoolToken(wrappedLiquidityPoolToken.address);
     await pool.setToken(token.address);
 
     await token.addMinter(pool.address);
@@ -58,38 +58,47 @@ describe("Locked Lending Pool Token", () => {
     alicePool = await pool.connect(alice);
   });
 
-  it("Should calculate the amount of lending value given different lock periods ", async () => {
-    await pool.calculateLendingValue(1, 1000).then((lockValue) => {
+  it("Should calculate the amount of liquidity value given different lock periods ", async () => {
+    await pool.calculateLiquidityValue(1, 1000).then((lockValue) => {
       expect(lockValue).to.eq(10000);
     });
-    await pool.calculateLendingValue(2, 1000).then((lockValue) => {
+    await pool.calculateLiquidityValue(2, 1000).then((lockValue) => {
       expect(lockValue).to.eq(25000);
     });
-    await pool.calculateLendingValue(3, 1000).then((lockValue) => {
+    await pool.calculateLiquidityValue(3, 1000).then((lockValue) => {
       expect(lockValue).to.eq(75000);
     });
   });
 
   it("Should allow a token to be staked and update views to reflect", async () => {
-    await setupLendingPoolLock();
+    await setupLiquidityPoolLock();
+
+    await pool.totalStake().then((totalStaked: BigNumber) => {
+      expect(totalStaked).to.eq(0);
+    });
+
+    await pool.liquidityTokens(alice.address).then((aliceTokens : BigNumber) => {
+      expect(aliceTokens).to.eq(0);
+    });
 
     await alicePool.stake(1);
-    await pool.totalStaked().then((totalStaked: BigNumber) => {
+
+    await pool.totalStake().then((totalStaked: BigNumber) => {
       expect(totalStaked).to.eq(amount);
     });
 
-    await pool.balanceOf(alice.address).then((aliceStake) => {
-      expect(aliceStake).to.eq(amount);
+    await pool.liquidityTokens(alice.address).then((aliceTokens: BigNumber) => {
+      expect(aliceTokens).to.eq(amount);
     });
   });
 
   it("Should calculate the reward based on the total amount & duration", async () => {
-    await setupLendingPoolLock();
+    await setupLiquidityPoolLock();
     await alicePool.stake(1);
   });
 
-  async function setupLendingPoolLock() {
-    await wrappedLendingPoolToken.lockLendingPoolToken(amount, 1);
-    await wrappedLendingPoolToken.approve(pool.address, 1);
+  async function setupLiquidityPoolLock() {
+    await wrappedLiquidityPoolToken.lockLiquidityPoolToken(amount, 1);
+    await wrappedLiquidityPoolToken.approve(pool.address, 1);
   }
 });

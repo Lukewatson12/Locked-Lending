@@ -3,41 +3,41 @@ pragma solidity ^0.6.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./interface/iLockedLendingPoolToken.sol";
-import "./LendingPoolErc20.sol";
-import "./interface/iLockedLendingPoolToken.sol";
+import "./interface/iLockedLiquidityPoolToken.sol";
+import "./LiquidityPoolErc20.sol";
+import "./interface/iLockedLiquidityPoolToken.sol";
 
 // Can look at > https://eips.ethereum.org/EIPS/eip-1155
-contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
+contract WrappedLiquidityPoolToken is ERC721, iLockedLiquidityPoolToken {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
 
     Counters.Counter private tokenIds;
 
-    mapping(uint256 => iLockedLendingPoolToken.LLPNFT) LLPNFTMapping;
+    mapping(uint256 => iLockedLiquidityPoolToken.LLPNFT) LLPNFTMapping;
 
-    address lendingPoolTokenAddress;
-    IERC20 lendingPoolToken;
+    address liquidityPoolTokenAddress;
+    IERC20 liquidityPoolToken;
 
-    constructor(address _lendingPoolTokenAddress)
+    constructor(address _liquidityPoolTokenAddress)
         public
-        ERC721("Locked Lending", "LLPT")
+        ERC721("Locked Liquidity", "LLPT")
     {
-        lendingPoolToken = IERC20(_lendingPoolTokenAddress);
+        liquidityPoolToken = IERC20(_liquidityPoolTokenAddress);
     }
 
-    function lockLendingPoolToken(uint256 _amount, LockPeriod _lockPeriod)
+    function lockLiquidityPoolToken(uint256 _amount, LockPeriod _lockPeriod)
         public
         override
         returns (uint256)
     {
         require(
-            lendingPoolToken.allowance(msg.sender, address(this)) >= _amount,
+            liquidityPoolToken.allowance(msg.sender, address(this)) >= _amount,
             "Not enough allowance"
         );
 
         require(
-            lendingPoolToken.balanceOf(msg.sender) >= _amount,
+            liquidityPoolToken.balanceOf(msg.sender) >= _amount,
             "Not enough LP tokens"
         );
 
@@ -48,10 +48,10 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
         );
 
         tokenIds.increment();
-        uint256 lockedLendingPoolTokenId = tokenIds.current();
-        _safeMint(msg.sender, lockedLendingPoolTokenId);
+        uint256 lockedLiquidityPoolTokenId = tokenIds.current();
+        _safeMint(msg.sender, lockedLiquidityPoolTokenId);
 
-        LLPNFTMapping[lockedLendingPoolTokenId] = iLockedLendingPoolToken
+        LLPNFTMapping[lockedLiquidityPoolTokenId] = iLockedLiquidityPoolToken
             .LLPNFT({
             lockPeriod: _lockPeriod,
             lockStart: block.timestamp,
@@ -60,9 +60,9 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
             isEntity: true
         });
 
-        lendingPoolToken.transferFrom(msg.sender, address(this), _amount);
+        liquidityPoolToken.transferFrom(msg.sender, address(this), _amount);
 
-        return lockedLendingPoolTokenId;
+        return lockedLiquidityPoolTokenId;
     }
 
     function withdraw(uint256 _id) public override {
@@ -73,11 +73,11 @@ contract WrappedLendingPoolToken is ERC721, iLockedLendingPoolToken {
             "Tokens are still locked"
         );
 
-        lendingPoolToken.transfer(ownerOf(_id), LLPNFTMapping[_id].amount);
+        liquidityPoolToken.transfer(ownerOf(_id), LLPNFTMapping[_id].amount);
 
         _burn(_id);
 
-        LLPNFTMapping[_id] = iLockedLendingPoolToken.LLPNFT({
+        LLPNFTMapping[_id] = iLockedLiquidityPoolToken.LLPNFT({
             lockPeriod: LockPeriod.FINISHED,
             lockStart: 0,
             lockEnd: 0,

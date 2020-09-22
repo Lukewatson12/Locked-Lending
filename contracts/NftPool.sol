@@ -83,17 +83,16 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
             );
     }
 
-    function earned(address account) public view returns (uint256) {
+    function earned(address _account) public view returns (uint256) {
         // @dev if this pool has not yet opened, the reward will be null
         if (false == hasPoolStarted()) {
             return 0;
         }
 
-        return
-            balanceOf(account)
-                .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
+        return myLiquidityValue[_account]
+                .mul(rewardPerToken().sub(userRewardPerTokenPaid[_account]))
                 .div(1e18)
-                .add(rewards[account]);
+                .add(rewards[_account]);
     }
 
     function stake(uint256 tokenId)
@@ -126,7 +125,10 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
         checkHalve
     {
         require(tokenId >= 0, "token id must be >= 0");
-        require(totalStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
+        require(
+            totalStaked(msg.sender) > 0,
+            "No Liquidity Pool NF tokens staked"
+        );
         super.withdraw(tokenId);
         emit Withdrawn(msg.sender, tokenId);
     }
@@ -144,7 +146,10 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     }
 
     function withdrawAll() public override updateReward(msg.sender) checkHalve {
-        require(totalStaked(msg.sender) > 0, "No Lending Pool NF tokens staked");
+        require(
+            totalStaked(msg.sender) > 0,
+            "No Liquidity Pool NF tokens staked"
+        );
         super.withdrawAll();
         emit WithdrawnAll(msg.sender);
     }

@@ -14,7 +14,7 @@ contract LPTokenWrapper is IERC721Receiver {
     WrappedLiquidityPoolToken private wrappedLiquidityPoolToken;
 
     uint256 private countNftStaked;
-    uint256 private countLpTokensStaked;
+    uint256 private totalLiquidityPoolTokens;
     uint256 private totalLiquidityValue;
 
     mapping(address => uint256) internal myLiquidityTokens;
@@ -26,26 +26,34 @@ contract LPTokenWrapper is IERC721Receiver {
         wrappedLiquidityPoolToken = WrappedLiquidityPoolToken(_address);
     }
 
-    function totalStake() public view returns (uint256) {
-        return countLpTokensStaked;
+    function getTotalLiquidityPoolTokens() public view returns (uint256) {
+        return totalLiquidityPoolTokens;
     }
 
-    function totalSupply() public view returns (uint256) {
+    function getTotalLiquidityValue() public view returns (uint256) {
         return totalLiquidityValue;
     }
 
-    function liquidityValue(address _account) public view returns (uint256) {
+    function getMyLiquidityValue(address _account)
+        public
+        view
+        returns (uint256)
+    {
         return myLiquidityValue[_account];
     }
 
-    function liquidityTokens(address _account) public view returns (uint256) {
+    function getMyLiquidityTokens(address _account)
+        public
+        view
+        returns (uint256)
+    {
         return myLiquidityTokens[_account];
     }
 
-    function totalStaked(address account) public view returns (uint256) {
+    function totalStaked(address _account) public view returns (uint256) {
         uint256 staked = 0;
-        for (uint256 i = 0; i < myTokens[account].length; i++) {
-            if (!myTokens[account][i].isWithdrawn) {
+        for (uint256 i = 0; i < myTokens[_account].length; i++) {
+            if (!myTokens[_account][i].isWithdrawn) {
                 staked++;
             }
         }
@@ -92,6 +100,7 @@ contract LPTokenWrapper is IERC721Receiver {
         return staked;
     }
 
+    // todo ensure ownership of token
     function stake(uint256 _tokenId) public virtual {
         (
             uint256 lockStart,
@@ -124,10 +133,17 @@ contract LPTokenWrapper is IERC721Receiver {
         );
 
         countNftStaked = countNftStaked.add(1);
-        countLpTokensStaked = countLpTokensStaked.add(liquidityPoolTokens);
+
+        totalLiquidityPoolTokens = totalLiquidityPoolTokens.add(
+            liquidityPoolTokens
+        );
+
         myLiquidityTokens[msg.sender] = myLiquidityTokens[msg.sender].add(
             liquidityPoolTokens
         );
+
+        totalLiquidityValue = totalLiquidityValue.add(liquidityValue);
+
         myLiquidityValue[msg.sender] = myLiquidityValue[msg.sender].add(
             liquidityValue
         );
@@ -147,7 +163,7 @@ contract LPTokenWrapper is IERC721Receiver {
             ) {
                 countNftStaked = countNftStaked.sub(1);
 
-                countLpTokensStaked = countLpTokensStaked.sub(
+                totalLiquidityPoolTokens = totalLiquidityPoolTokens.sub(
                     myTokens[msg.sender][i].liquidityPoolTokens
                 );
 

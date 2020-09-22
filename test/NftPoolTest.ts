@@ -16,8 +16,7 @@ import {NftPool} from "../typechain/NftPool";
 import {FairToken} from "../typechain/FairToken";
 import {WrappedLiquidityPoolToken} from "../typechain/WrappedLiquidityPoolToken";
 import {LiquidityPoolErc20} from "../typechain/LiquidityPoolErc20";
-
-import {oneHour} from "./helpers/numbers";
+import {oneDay} from "./helpers/numbers";
 
 const {expect} = chai;
 
@@ -58,43 +57,53 @@ describe("Locked Liquidity Pool Token", () => {
     alicePool = await pool.connect(alice);
   });
 
-  it("Should calculate the amount of liquidity value given different lock periods ", async () => {
-    await pool.calculateLiquidityValue(1, 1000).then((lockValue) => {
-      expect(lockValue).to.eq(10000);
-    });
-    await pool.calculateLiquidityValue(2, 1000).then((lockValue) => {
-      expect(lockValue).to.eq(25000);
-    });
-    await pool.calculateLiquidityValue(3, 1000).then((lockValue) => {
-      expect(lockValue).to.eq(75000);
-    });
-  });
-
-  it("Should allow a token to be staked and update views to reflect", async () => {
-    await setupLiquidityPoolLock();
-
-    await pool.totalStake().then((totalStaked: BigNumber) => {
-      expect(totalStaked).to.eq(0);
-    });
-
-    await pool.liquidityTokens(alice.address).then((aliceTokens : BigNumber) => {
-      expect(aliceTokens).to.eq(0);
-    });
-
-    await alicePool.stake(1);
-
-    await pool.totalStake().then((totalStaked: BigNumber) => {
-      expect(totalStaked).to.eq(amount);
-    });
-
-    await pool.liquidityTokens(alice.address).then((aliceTokens: BigNumber) => {
-      expect(aliceTokens).to.eq(amount);
-    });
-  });
+  // it("Should calculate the amount of liquidity value given different lock periods ", async () => {
+  //   await pool.calculateLiquidityValue(1, 1000).then((lockValue) => {
+  //     expect(lockValue).to.eq(10000);
+  //   });
+  //   await pool.calculateLiquidityValue(2, 1000).then((lockValue) => {
+  //     expect(lockValue).to.eq(25000);
+  //   });
+  //   await pool.calculateLiquidityValue(3, 1000).then((lockValue) => {
+  //     expect(lockValue).to.eq(75000);
+  //   });
+  // });
+  //
+  // it("Should allow a token to be staked and update views to reflect", async () => {
+  //   await setupLiquidityPoolLock();
+  //
+  //   let totalStake = await pool.getTotalLiquidityPoolTokens();
+  //   expect(totalStake).to.eq(0);
+  //
+  //   await pool
+  //     .getMyLiquidityTokens(alice.address)
+  //     .then((aliceTokens: BigNumber) => {
+  //       expect(aliceTokens).to.eq(0);
+  //     });
+  //
+  //   await alicePool.stake(1);
+  //
+  //   await pool.getTotalLiquidityPoolTokens().then((totalStaked: BigNumber) => {
+  //     expect(totalStaked).to.eq(amount);
+  //   });
+  //
+  //   await pool
+  //     .getMyLiquidityTokens(alice.address)
+  //     .then((aliceTokens: BigNumber) => {
+  //       expect(aliceTokens).to.eq(amount);
+  //     });
+  // });
 
   it("Should calculate the reward based on the total amount & duration", async () => {
     await setupLiquidityPoolLock();
     await alicePool.stake(1);
+
+    await wait(10000);
+
+    await pool.lastUpdateTime().then(console.log);
+    await pool.lastTimeRewardApplicable().then(console.log);
+    await pool.rewardPerToken().then(console.log);
+    await pool.earned(alice.address).then(console.log);
   });
 
   async function setupLiquidityPoolLock() {

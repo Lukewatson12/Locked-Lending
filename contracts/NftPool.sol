@@ -18,9 +18,11 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
 
     uint256 public constant DURATION = 30 days;
 
-    uint256 public initReward = 10000 * 1e18;
-    uint256 public startTime = 1608854400; // 1608854400 => Friday, 25 December 2020 00:00:00
-    uint256 public periodFinish = 0;
+    uint256 public initialReward = 10000 * 1e18;
+    //    uint256 public startTime = 1608854400; // 1608854400 => Friday, 25 December 2020 00:00:00
+    uint256 public startTime = block.timestamp; // 1608854400 => Friday, 25 December 2020 00:00:00
+    uint256 public endTime = block.timestamp + DURATION;
+
     uint256 public rewardRate = 0;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
@@ -33,24 +35,13 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     event WithdrawnAll(address indexed user);
     event RewardPaid(address indexed user, uint256 reward);
 
-    modifier updateReward(address account) {
+    modifier updateReward(address _account) {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
-        if (account != address(0)) {
-            rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
-        }
-        _;
-    }
 
-    modifier checkHalve() {
-        if (block.timestamp >= periodFinish) {
-            initReward = initReward.mul(50).div(100);
-            fairToken.mint(address(this), initReward);
-
-            rewardRate = initReward.div(DURATION);
-            periodFinish = block.timestamp.add(DURATION);
-            emit RewardAdded(initReward);
+        if (_account != address(0)) {
+            rewards[_account] = earned(_account);
+            userRewardPerTokenPaid[_account] = rewardPerTokenStored;
         }
         _;
     }
@@ -60,26 +51,23 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
         _;
     }
 
-    function hasPoolStarted() internal view returns (bool) {
+    function hasPoolStarted() public view returns (bool) {
         return block.timestamp >= startTime;
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
-        return Math.min(block.timestamp, periodFinish);
+        return Math.min(block.timestamp, endTime);
     }
 
     function rewardPerToken() public view returns (uint256) {
-        if (totalSupply() == 0) {
+        if (getTotalLiquidityValue() == 0) {
             return rewardPerTokenStored;
         }
-
         return
             rewardPerTokenStored.add(
-                lastTimeRewardApplicable()
-                    .sub(lastUpdateTime)
-                    .mul(rewardRate)
-                    .mul(1e18)
-                    .div(totalSupply())
+                endTime.sub(lastUpdateTime).mul(rewardRate).mul(1e18).div(
+                    getTotalLiquidityValue()
+                )
             );
     }
 
@@ -89,18 +77,14 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
             return 0;
         }
 
-        return myLiquidityValue[_account]
+        return
+            myLiquidityValue[_account]
                 .mul(rewardPerToken().sub(userRewardPerTokenPaid[_account]))
                 .div(1e18)
                 .add(rewards[_account]);
     }
 
-    function stake(uint256 tokenId)
-        public
-        override
-        updateReward(msg.sender)
-        checkHalve
-    {
+    function stake(uint256 tokenId) public override updateReward(msg.sender) {
         require(tokenId >= 0, "token id must be >= 0");
         super.stake(tokenId);
         emit Staked(msg.sender, tokenId);
@@ -109,7 +93,6 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     function stakeMultiple(uint256[] memory tokenIds)
         public
         updateReward(msg.sender)
-        checkHalve
     {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(tokenIds[i] >= 0, "Token id must be >= 0");
@@ -122,7 +105,6 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
         public
         override
         updateReward(msg.sender)
-        checkHalve
     {
         require(tokenId >= 0, "token id must be >= 0");
         require(
@@ -136,7 +118,6 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
     function withdrawMultiple(uint256[] memory tokenIds)
         public
         updateReward(msg.sender)
-        checkHalve
     {
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(tokenIds[i] >= 0, "Token id must be >= 0");
@@ -145,7 +126,7 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
         }
     }
 
-    function withdrawAll() public override updateReward(msg.sender) checkHalve {
+    function withdrawAll() public override updateReward(msg.sender) {
         require(
             totalStaked(msg.sender) > 0,
             "No Liquidity Pool NF tokens staked"
@@ -159,7 +140,8 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
         getReward();
     }
 
-    function getReward() public updateReward(msg.sender) checkHalve {
+    // Used to transfer the accrued rewards out of the contract
+    function getReward() public updateReward(msg.sender) {
         uint256 reward = earned(msg.sender);
         if (reward > 0) {
             rewards[msg.sender] = 0;
@@ -168,22 +150,17 @@ contract NftPool is LPTokenWrapper, IRewardDistributionRecipient {
         }
     }
 
+    // Used to mint the tokens to be given as rewards
+    // Reward rate is set each time more rewards are created.
+    // Each time more rewards are created, the pools life is extended
     function notifyRewardAmount(uint256 reward)
         external
         override
         onlyRewardDistribution
         updateReward(address(0))
     {
-        if (block.timestamp >= periodFinish) {
-            rewardRate = reward.div(DURATION);
-        } else {
-            uint256 remaining = periodFinish.sub(block.timestamp);
-            uint256 leftover = remaining.mul(rewardRate);
-            rewardRate = reward.add(leftover).div(DURATION);
-        }
         fairToken.mint(address(this), reward);
-        lastUpdateTime = block.timestamp;
-        periodFinish = block.timestamp.add(DURATION);
+        rewardRate = reward.div(DURATION);
         emit RewardAdded(reward);
     }
 }
